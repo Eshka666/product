@@ -57,7 +57,7 @@ export default component$(() => {
           .getPublicUrl(fileName).data.publicUrl;
       }
 
-      let baseSlug = generateSlug(name.value);
+      const baseSlug = generateSlug(name.value);
       let slug = baseSlug;
       let count = 1;
 

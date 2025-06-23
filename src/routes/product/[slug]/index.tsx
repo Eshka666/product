@@ -45,6 +45,8 @@ export default component$(() => {
       <img
         src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://iozckjvzcctwwxzopfoe.supabase.co/${slug}`}
         alt="QR Code"
+        width={200}
+        height={200}
       />
       <p style={{ fontSize: "12px", color: "#555" }}>
         Отсканируйте, чтобы открыть товар
