@@ -1,25 +1,33 @@
-import { component$ } from "@builder.io/qwik";
-import type { DocumentHead } from "@builder.io/qwik-city";
+import { component$, useSignal, useTask$ } from "@builder.io/qwik";
+import { Link } from "@builder.io/qwik-city";
+
+import { supabase } from "~/lib/supabase";
 
 export default component$(() => {
+  const products = useSignal<any[]>([]);
+
+  useTask$(async () => {
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, name, slug");
+    if (!error && data) {
+      products.value = data;
+    }
+  });
+
   return (
-    <>
-      <h1>Hi 👋</h1>
-      <div>
-        Can't wait to see what you build with qwik!
-        <br />
-        Happy coding.
-      </div>
-    </>
+    <div style={{ padding: "20px" }}>
+      <h1>Список товаров</h1>
+      <Link href="/product/new">Добавить новый товар</Link>
+      <ul>
+        {products.value.map((product) => (
+          <li key={product.id}>
+            <Link href={`/product/${product.slug}`}>
+              {product.name || product.slug}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 });
-
-export const head: DocumentHead = {
-  title: "Welcome to Qwik",
-  meta: [
-    {
-      name: "description",
-      content: "Qwik site description",
-    },
-  ],
-};
