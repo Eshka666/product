@@ -48,7 +48,7 @@ export default component$(() => {
       </p>
       <h2>QR-код</h2>
       <img
-        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://iozckjvzcctwwxzopfoe.supabase.co/${slug}`}
+        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://product-2-xi.vercel.app/product/${slug}`}
         alt="QR Code"
         width={200}
         height={200}
