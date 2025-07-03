@@ -9,6 +9,8 @@ interface Product {
   name: string;
   description: string;
   image_url: string;
+  price: number;
+  currency: string;
 }
 
 export default component$(() => {
@@ -41,6 +43,9 @@ export default component$(() => {
         height={200}
       />
       <p>{product.value.description}</p>
+      <p>
+        Цена: {product.value.price} {product.value.currency}
+      </p>
       <h2>QR-код</h2>
       <img
         src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://iozckjvzcctwwxzopfoe.supabase.co/${slug}`}

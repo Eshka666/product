@@ -4,6 +4,7 @@ import {
   $,
   noSerialize,
   type NoSerialize,
+  useTask$,
 } from "@builder.io/qwik";
 import { useNavigate } from "@builder.io/qwik-city";
 import { supabase } from "~/lib/supabase";
@@ -17,11 +18,25 @@ const generateSlug = (text: string) =>
 export default component$(() => {
   const nav = useNavigate();
 
+  const categories = useSignal<any[]>([]);
   const name = useSignal("");
+  const currency = useSignal("BYN");
+  const price = useSignal("");
   const description = useSignal("");
+  const categoryName = useSignal("");
   const imageFile = useSignal<NoSerialize<File> | null>(null);
   const loading = useSignal(false);
   const error = useSignal("");
+  const categoryId = useSignal("");
+
+  useTask$(async () => {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name");
+    if (!error && data) {
+      categories.value = data;
+    }
+  });
 
   const handleInputChange = (signal: typeof name | typeof description) =>
     $((e: Event) => {
@@ -73,19 +88,54 @@ export default component$(() => {
 
         slug = `${baseSlug}-${count++}`;
       }
+      let finalCategoryId = categoryId.value;
 
-      const { error: insertError } = await supabase.from("products").insert([
-        {
-          name: name.value,
-          slug,
-          description: description.value,
-          image_url: imageUrl,
-        },
-      ]);
+      if (finalCategoryId === "new" && categoryName.value.trim()) {
+        const newSlug = generateSlug(categoryName.value);
+
+        const { data: newCat, error: newCatError } = await supabase
+          .from("categories")
+          .insert([{ name: categoryName.value.trim(), slug: newSlug }])
+          .select("id")
+          .single();
+
+        if (newCatError || !newCat) {
+          throw new Error("Ошибка при добавлении новой категории");
+        }
+
+        finalCategoryId = newCat.id;
+
+        categories.value = [
+          ...categories.value,
+          { id: newCat.id, name: categoryName.value.trim() },
+        ];
+      }
+
+      if (!finalCategoryId) {
+        throw new Error("Пожалуйста, выбери или создай категорию");
+      }
+
+      const { data: inserted, error: insertError } = await supabase
+        .from("products")
+        .insert([
+          {
+            name: name.value,
+            slug,
+            description: description.value,
+            image_url: imageUrl,
+            price: parseFloat(price.value),
+            currency: currency.value,
+            category_id: finalCategoryId,
+          },
+        ])
+        .select("id, slug")
+        .single();
 
       if (insertError) throw new Error(insertError.message);
 
-      nav("/product");
+      if (inserted) {
+        nav(`/product/${inserted.slug}/`);
+      }
     } catch (err) {
       error.value = (err as Error).message;
     } finally {
@@ -99,6 +149,42 @@ export default component$(() => {
       <form preventdefault:submit onSubmit$={onSubmit}>
         <div>
           <label>
+            Категория:
+            <select
+              required
+              value={categoryId.value}
+              onChange$={(e) =>
+                (categoryId.value = (e.target as HTMLSelectElement).value)
+              }
+            >
+              <option value="">Выбери категорию</option>
+              {categories.value.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+              <option value="new">+ Добавить новую категорию</option>
+            </select>
+          </label>
+        </div>
+
+        {categoryId.value === "new" && (
+          <div>
+            <label>
+              Новая категория:
+              <input
+                type="text"
+                value={categoryName.value}
+                onInput$={(e) =>
+                  (categoryName.value = (e.target as HTMLInputElement).value)
+                }
+                required
+              />
+            </label>
+          </div>
+        )}
+        <div>
+          <label>
             Название:
             <input
               type="text"
@@ -108,7 +194,6 @@ export default component$(() => {
             />
           </label>
         </div>
-
         <div>
           <label>
             Описание:
@@ -118,14 +203,40 @@ export default component$(() => {
             />
           </label>
         </div>
-
         <div>
           <label>
             Картинка:
             <input type="file" accept="image/*" onChange$={onFileChange} />
           </label>
         </div>
-
+        <div>
+          <label>
+            Цена:
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={price.value}
+              onInput$={handleInputChange(price)}
+              required
+            />
+          </label>
+        </div>
+        <div>
+          <label>
+            Валюта:
+            <select
+              value={currency.value}
+              onChange$={(e) =>
+                (currency.value = (e.target as HTMLSelectElement).value)
+              }
+            >
+              <option value="BYN">BYN (белорусские рубли)</option>
+              <option value="USD">USD (доллары)</option>
+              <option value="EUR">EUR (евро)</option>
+            </select>
+          </label>
+        </div>
         {error.value && <p style={{ color: "red" }}>Ошибка: {error.value}</p>}
         <button type="submit" disabled={loading.value}>
           {loading.value ? "Сохраняем..." : "Сохранить"}
