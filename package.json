@@ -8,10 +8,11 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build.server": "vite build -c vite.config.server.ts",
+    "start": "node server.js",
     "build": "qwik build",
     "build.client": "vite build",
     "build.preview": "vite build --ssr src/entry.preview.tsx",
-    "build.server": "vite build -c adapters/cloudflare-pages/vite.config.ts",
     "build.types": "tsc --incremental --noEmit",
     "deploy": "wrangler pages deploy ./dist",
     "dev": "vite --mode ssr",
@@ -21,7 +22,6 @@
     "lint": "eslint \"src/**/*.ts*\"",
     "preview": "qwik build preview && vite preview --open",
     "serve": "wrangler pages dev ./dist --compatibility-flags=nodejs_als",
-    "start": "vite --open --mode ssr",
     "qwik": "qwik"
   },
   "devDependencies": {
